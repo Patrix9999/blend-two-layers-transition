@@ -8,7 +8,8 @@ gi.require_version('GimpUi', '3.0')
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gegl', '0.4')
 
-from gi.repository import Gimp, GimpUi, Gtk, Gegl
+from gi.repository import Gimp, GimpUi, Gtk, Gegl, GObject
+
 
 class BlendLayersPlugin(Gimp.PlugIn):
     def do_set_i18n(self, procname):
@@ -22,52 +23,61 @@ class BlendLayersPlugin(Gimp.PlugIn):
 
         proc.set_menu_label("Blend two layers transition")
         proc.add_menu_path("<Image>/Filters/")
-        proc.set_documentation("Auto-blends two layers via alpha gradient transition in the middle", "Blend two layers transition", name)
+        proc.set_documentation(
+            "Auto-blends two layers via alpha gradient transition in the middle",
+            "Blend two layers transition",
+            name,
+        )
         proc.set_attribution("Patrix", "Patrix", "2026")
+
+        proc.add_int_argument(
+            "blend-percent",
+            "Blend percent",
+            "Blend size (% of image height)",
+            1,
+            100,
+            20,
+            GObject.ParamFlags.READWRITE,
+        )
 
         return proc
 
     def run(self, procedure, run_mode, image, drawable, args, data):
-        if run_mode == Gimp.RunMode.INTERACTIVE:
-            blend_percent = 20  # default value
-            GimpUi.init("blend-two-layers-transition.py")
+        GimpUi.init("blend-two-layers-transition.py")
 
-            # Popup UI
-            dialog = GimpUi.Dialog(
-                use_header_bar=False,
-                title="Blend two layers transition",
-                role="blend-two-layers-transition"
-            )
+        # Determine blend percent
+        blend_percent = args.get_property("blend-percent")
+
+        # Interactive mode using GimpUi.Dialog
+        if run_mode == Gimp.RunMode.INTERACTIVE:
+            dialog = GimpUi.Dialog(title="Blend two layers", modal=True)
+
+            content_area = dialog.get_content_area()
+            content_area.set_spacing(12)
+
+            label = Gtk.Label(label="Blend percent:")
+            content_area.add(label)
+
+            scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 1, 100, 1)
+            scale.set_value(blend_percent)
+            scale.set_draw_value(True)
+            content_area.add(scale)
 
             dialog.add_button("_OK", Gtk.ResponseType.OK)
             dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
 
-            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-            dialog.get_content_area().add(box)
-            box.show()
+            dialog.show_all()
+            response = dialog.run()
 
-            label = Gtk.Label(label="_Blend size (% of image height, 1-100):")  
-            box.pack_start(label, False, False, 0)
-            label.show()
+            if response != Gtk.ResponseType.OK:
+                dialog.destroy()
+                return procedure.new_return_values(Gimp.PDBStatusType.CANCEL, None)
 
-            entry = Gtk.Entry()
-            entry.set_text(str(blend_percent))
-            box.pack_start(entry, False, False, 0)
-            entry.show()
+            blend_percent = int(scale.get_value())
+            args.set_property("blend-percent", blend_percent)
+            dialog.destroy()
 
-            while True:
-                response = dialog.run()
-                if response == Gtk.ResponseType.OK:
-                    try:
-                        blend_percent = max(1, min(100, int(entry.get_text())))
-                    except ValueError:
-                        blend_percent = 20
-                    dialog.destroy()
-                    break
-                else:
-                    dialog.destroy()
-                    return procedure.new_return_values(Gimp.PDBStatusType.CANCEL, None)
-
+        # Image dimensions
         width = image.get_width()
         height = image.get_height()
 
@@ -77,6 +87,7 @@ class BlendLayersPlugin(Gimp.PlugIn):
 
         top = layers[0]
 
+        # Create gradient mask
         mask = top.create_mask(Gimp.AddMaskType.WHITE)
         top.add_mask(mask)
 
@@ -85,7 +96,6 @@ class BlendLayersPlugin(Gimp.PlugIn):
 
         y1 = max(0, int(round(center_y - half_blend)))
         y2 = min(height, int(round(center_y + half_blend)))
-
         if y2 <= y1:
             y2 = y1 + 1
 
@@ -105,7 +115,7 @@ class BlendLayersPlugin(Gimp.PlugIn):
             0,
             y1,
             0,
-            y2
+            y2,
         )
 
         return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, None)
