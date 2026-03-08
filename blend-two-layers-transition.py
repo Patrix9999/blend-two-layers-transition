@@ -10,8 +10,6 @@ gi.require_version('Gegl', '0.4')
 
 from gi.repository import Gimp, GimpUi, Gtk, Gegl
 
-_ = lambda s: s  # simple fallback for translations
-
 class BlendLayersPlugin(Gimp.PlugIn):
     def do_set_i18n(self, procname):
         return False
@@ -32,24 +30,23 @@ class BlendLayersPlugin(Gimp.PlugIn):
     def run(self, procedure, run_mode, image, drawable, args, data):
         if run_mode == Gimp.RunMode.INTERACTIVE:
             blend_percent = 20  # default value
-
             GimpUi.init("blend-two-layers-transition.py")
 
             # Popup UI
             dialog = GimpUi.Dialog(
                 use_header_bar=False,
-                title=_("Blend two layers transition"),
+                title="Blend two layers transition",
                 role="blend-two-layers-transition"
             )
 
-            dialog.add_button(_("_OK"), Gtk.ResponseType.OK)
-            dialog.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+            dialog.add_button("_OK", Gtk.ResponseType.OK)
+            dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
 
             box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
             dialog.get_content_area().add(box)
             box.show()
 
-            label = Gtk.Label(label=_("Blend size (% of image height, 1-100):"))
+            label = Gtk.Label(label="_Blend size (% of image height, 1-100):")  
             box.pack_start(label, False, False, 0)
             label.show()
 
