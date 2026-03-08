@@ -20,3 +20,16 @@ As a user, you can also specify the percentage value how dense gradient you want
 - Put in `plugins` dir, example path for windows users: `%AppData%\GIMP\3.0\plug-ins\`
 - Extract the `blend-two-layers-transition` directory directly into `plug-ins` folder
 - Enjoy!
+
+# Debugging the plugin
+
+The easiest way to debug the plugin, is to launch it `gimp-3.0` with the following arguments: 
+- `--verbose`
+- `--console-messages`
+
+Here's the minimal example how you can launch `gimp-3.0.exe` under windows using **powershell** (be sure to `cd` into `YourDir\GIMP 3\bin` first!):
+```ps
+./gimp-3.0.exe --verbose --console-messages
+```
+
+**NOTE!** You need to restart the `gimp-3.0` each time, you make changes.
