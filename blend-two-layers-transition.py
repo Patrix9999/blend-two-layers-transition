@@ -2,6 +2,7 @@
 
 import sys
 import gi
+
 gi.require_version('Gimp', '3.0')
 gi.require_version('GimpUi', '3.0')
 gi.require_version('Gtk', '3.0')
@@ -12,25 +13,29 @@ from gi.repository import Gimp, GimpUi, Gtk, Gegl
 _ = lambda s: s  # simple fallback for translations
 
 class BlendLayersPlugin(Gimp.PlugIn):
+    def do_set_i18n(self, procname):
+        return False
+
     def do_query_procedures(self):
         return ["blend-two-layers-transition"]
 
     def do_create_procedure(self, name):
-        proc = Gimp.ImageProcedure.new(
-            self, name, Gimp.PDBProcType.PLUGIN, self.run, None
-        )
+        proc = Gimp.ImageProcedure.new(self, name, Gimp.PDBProcType.PLUGIN, self.run, None)
+
         proc.set_menu_label("Blend two layers transition")
         proc.add_menu_path("<Image>/Filters/")
         proc.set_documentation("Auto-blends two layers via alpha gradient transition in the middle", "Blend two layers transition", name)
         proc.set_attribution("Patrix", "Patrix", "2026")
+
         return proc
 
     def run(self, procedure, run_mode, image, drawable, args, data):
-        blend_percent = 20  # default value
-
         if run_mode == Gimp.RunMode.INTERACTIVE:
+            blend_percent = 20  # default value
+
             GimpUi.init("blend-two-layers-transition.py")
 
+            # Popup UI
             dialog = GimpUi.Dialog(
                 use_header_bar=False,
                 title=_("Blend two layers transition"),
