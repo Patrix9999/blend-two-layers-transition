@@ -2,6 +2,13 @@
 
 This is a simple [**GIMP 3**](https://www.gimp.org/downloads/) plugin written in **python 3** that allows you to blend two layers together.
 
+# Usage
+
+- Load your two textures as separate layers (layer order matters!)
+- Open `Filters` → `Blend two layers transition`
+- Pick the percentage value (`20%` is a good starting point).
+- Press `OK`
+
 # Demonstration
 
 Below image shows how plugin works in **GIMP 3.0.8 (rev 2)**
